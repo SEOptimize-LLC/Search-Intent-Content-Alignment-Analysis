@@ -8,7 +8,7 @@ from utils.llm_analysis import analyze_intent_with_llm
 
 st.set_page_config(page_title="Search Intent & Content Alignment Analyzer", layout="wide")
 
-st.title("Search Intent & Content Alignment Analyzer")
+st.title("Search Intent & Content Alignment Analyzer (v1.1)")
 st.markdown("""
 This tool automates the analysis of your content's alignment with search intent.
 1. Upload your **GSC Performance Report** (Pages, Queries, Clicks, Impressions, Position).

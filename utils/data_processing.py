@@ -80,17 +80,30 @@ def load_gsc_data(file):
     """
     try:
         if file.name.endswith('.csv'):
-            # Try reading with default comma separator
-            try:
-                df = pd.read_csv(file)
-                if len(df.columns) <= 1:
-                    # If only one column, try semicolon separator (common in EU)
+            # List of encodings to try
+            encodings = ['utf-8', 'utf-16', 'latin-1']
+            
+            for encoding in encodings:
+                try:
                     file.seek(0)
-                    df = pd.read_csv(file, sep=';')
-            except:
-                # Fallback to python engine which is more robust
+                    # Try reading with default comma separator
+                    df = pd.read_csv(file, encoding=encoding, on_bad_lines='skip')
+                    
+                    if len(df.columns) <= 1:
+                        # If only one column, try semicolon separator
+                        file.seek(0)
+                        df = pd.read_csv(file, sep=';', encoding=encoding, on_bad_lines='skip')
+                    
+                    # If we successfully read a dataframe with columns, break
+                    if len(df.columns) > 1:
+                        break
+                except:
+                    continue
+            else:
+                # If all encodings fail, try python engine as last resort
                 file.seek(0)
-                df = pd.read_csv(file, engine='python')
+                df = pd.read_csv(file, engine='python', on_bad_lines='skip')
+
         else:
             df = pd.read_excel(file)
             
