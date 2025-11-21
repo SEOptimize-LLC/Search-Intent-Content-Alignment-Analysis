@@ -75,8 +75,22 @@ with col2:
 if gsc_file and crawl_file:
     st.info("Files uploaded. Processing data...")
     
-    gsc_df = load_gsc_data(gsc_file)
-    crawl_df = load_crawl_data(crawl_file)
+    gsc_result = load_gsc_data(gsc_file)
+    crawl_result = load_crawl_data(crawl_file)
+    
+    # Handle GSC Load Result
+    if isinstance(gsc_result, tuple):
+        st.error(f"Error loading GSC file: {gsc_result[1]}")
+        gsc_df = None
+    else:
+        gsc_df = gsc_result
+
+    # Handle Crawl Load Result
+    if isinstance(crawl_result, tuple):
+        st.error(f"Error loading Crawl file: {crawl_result[1]}")
+        crawl_df = None
+    else:
+        crawl_df = crawl_result
     
     if gsc_df is not None and crawl_df is not None:
         merged_df = merge_data(gsc_df, crawl_df)
