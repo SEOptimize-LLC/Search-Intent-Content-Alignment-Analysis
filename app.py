@@ -84,6 +84,10 @@ if gsc_file and crawl_file:
         if merged_df is not None:
             st.success(f"Successfully merged data! Found {len(merged_df)} URLs.")
             
+            # Debug: Show columns
+            with st.expander("Debug: View Data Columns"):
+                st.write("Merged Data Columns:", merged_df.columns.tolist())
+            
             # Check for Impressions column
             if 'Impressions' in merged_df.columns:
                 # Filter options
@@ -120,6 +124,11 @@ if gsc_file and crawl_file:
                         
                         # Combine results
                         row_result = row.to_dict()
+                        # Handle NaN values for JSON serialization/display
+                        for k, v in row_result.items():
+                            if pd.isna(v):
+                                row_result[k] = None
+                                
                         row_result.update(analysis)
                         results.append(row_result)
                         

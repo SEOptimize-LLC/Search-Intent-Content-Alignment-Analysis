@@ -20,9 +20,13 @@ def normalize_columns(df):
         'average ctr': 'CTR',
         'position': 'Position',
         'average position': 'Position',
+        'avg. pos': 'Position',
+        'avg. position': 'Position',
         'top queries': 'Top queries',
         'query': 'Top queries',
-        'queries': 'Top queries'
+        'queries': 'Top queries',
+        'keyword': 'Top queries',
+        'keywords': 'Top queries'
     }
 
     new_columns = {}
@@ -52,6 +56,23 @@ def normalize_columns(df):
         
     return df
 
+def clean_numeric_columns(df):
+    """
+    Cleans numeric columns by removing commas and converting to float/int.
+    """
+    numeric_cols = ['Impressions', 'Clicks', 'CTR', 'Position']
+    
+    for col in numeric_cols:
+        if col in df.columns:
+            # Remove commas, %, and handle "No data"
+            if df[col].dtype == 'object':
+                df[col] = df[col].astype(str).str.replace(',', '').str.replace('%', '')
+                df[col] = df[col].replace('No data', pd.NA)
+            
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+            
+    return df
+
 def load_gsc_data(file):
     """
     Loads GSC data from a CSV or Excel file.
@@ -59,11 +80,22 @@ def load_gsc_data(file):
     """
     try:
         if file.name.endswith('.csv'):
-            df = pd.read_csv(file)
+            # Try reading with default comma separator
+            try:
+                df = pd.read_csv(file)
+                if len(df.columns) <= 1:
+                    # If only one column, try semicolon separator (common in EU)
+                    file.seek(0)
+                    df = pd.read_csv(file, sep=';')
+            except:
+                # Fallback to python engine which is more robust
+                file.seek(0)
+                df = pd.read_csv(file, engine='python')
         else:
             df = pd.read_excel(file)
             
         df = normalize_columns(df)
+        df = clean_numeric_columns(df)
         return df
     except Exception as e:
         return None, str(e)
