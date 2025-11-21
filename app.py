@@ -126,8 +126,8 @@ if gsc_file and crawl_file:
                     results = []
                     total_rows = len(filtered_df)
                     
-                    for index, row in filtered_df.iterrows():
-                        status_text.text(f"Analyzing {index + 1}/{total_rows}: {row['URL']}")
+                    for i, (index, row) in enumerate(filtered_df.iterrows()):
+                        status_text.text(f"Analyzing {i + 1}/{total_rows}: {row['URL']}")
                         
                         # 1. Fetch SERP Data
                         query = row['Top queries']
@@ -149,7 +149,7 @@ if gsc_file and crawl_file:
                         row_result.update(analysis)
                         results.append(row_result)
                         
-                        progress_bar.progress((index + 1) / total_rows)
+                        progress_bar.progress((i + 1) / total_rows)
                         
                     # Final DataFrame
                     final_df = pd.DataFrame(results)
