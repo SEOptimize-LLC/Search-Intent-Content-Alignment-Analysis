@@ -10,13 +10,46 @@ def normalize_columns(df):
     
     url_variations = ['Address', 'Landing Page', 'Page', 'url', 'link', 'Permalink']
     
+    # Map for other common GSC columns
+    column_mapping = {
+        'impressions': 'Impressions',
+        'total impressions': 'Impressions',
+        'clicks': 'Clicks',
+        'total clicks': 'Clicks',
+        'ctr': 'CTR',
+        'average ctr': 'CTR',
+        'position': 'Position',
+        'average position': 'Position',
+        'top queries': 'Top queries',
+        'query': 'Top queries',
+        'queries': 'Top queries'
+    }
+
+    new_columns = {}
     for col in df.columns:
-        if col.lower() == 'url':
-            return df # Already has URL column
+        col_lower = col.lower()
+        
+        # Check for URL variations
+        if col_lower == 'url':
+            new_columns[col] = 'URL'
+            continue
+            
+        found_url = False
         for var in url_variations:
-            if col.lower() == var.lower():
-                df.rename(columns={col: 'URL'}, inplace=True)
-                return df
+            if col_lower == var.lower():
+                new_columns[col] = 'URL'
+                found_url = True
+                break
+        if found_url:
+            continue
+
+        # Check for other mappings
+        if col_lower in column_mapping:
+            new_columns[col] = column_mapping[col_lower]
+    
+    if new_columns:
+        df.rename(columns=new_columns, inplace=True)
+        
     return df
 
 def load_gsc_data(file):

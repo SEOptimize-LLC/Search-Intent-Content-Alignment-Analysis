@@ -84,9 +84,14 @@ if gsc_file and crawl_file:
         if merged_df is not None:
             st.success(f"Successfully merged data! Found {len(merged_df)} URLs.")
             
-            # Filter options
-            min_impressions = st.slider("Minimum Impressions Filter", 0, 1000, 100)
-            filtered_df = merged_df[merged_df['Impressions'] >= min_impressions].copy()
+            # Check for Impressions column
+            if 'Impressions' in merged_df.columns:
+                # Filter options
+                min_impressions = st.slider("Minimum Impressions Filter", 0, 1000, 100)
+                filtered_df = merged_df[merged_df['Impressions'] >= min_impressions].copy()
+            else:
+                st.warning("'Impressions' column not found. Skipping filter.")
+                filtered_df = merged_df.copy()
             
             st.dataframe(filtered_df.head())
             
