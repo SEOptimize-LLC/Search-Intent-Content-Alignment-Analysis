@@ -30,35 +30,38 @@ try:
 except:
     firecrawl_api_key = st.sidebar.text_input("Firecrawl API Key", type="password")
 
-# Model Selection
-model_provider = st.sidebar.selectbox("Select AI Provider", ["OpenAI", "Anthropic", "Google", "xAI"])
+# OpenRouter Configuration
+st.sidebar.subheader("LLM Configuration (OpenRouter)")
+try:
+    openrouter_api_key = st.secrets["OPENROUTER_API_KEY"]
+except:
+    openrouter_api_key = st.sidebar.text_input("OpenRouter API Key", type="password")
 
-if model_provider == "OpenAI":
-    model_options = ["gpt-4o", "gpt-4-turbo"]
-    try:
-        llm_api_key = st.secrets["OPENAI_API_KEY"]
-    except:
-        llm_api_key = st.sidebar.text_input("OpenAI API Key", type="password")
-elif model_provider == "Anthropic":
-    model_options = ["claude-3-5-sonnet-20240620", "claude-3-opus-20240229"]
-    try:
-        llm_api_key = st.secrets["ANTHROPIC_API_KEY"]
-    except:
-        llm_api_key = st.sidebar.text_input("Anthropic API Key", type="password")
-elif model_provider == "Google":
-    model_options = ["gemini-1.5-pro", "gemini-1.5-flash"]
-    try:
-        llm_api_key = st.secrets["GOOGLE_API_KEY"]
-    except:
-        llm_api_key = st.sidebar.text_input("Google API Key", type="password")
-elif model_provider == "xAI":
-    model_options = ["grok-beta"] # Placeholder model name
-    try:
-        llm_api_key = st.secrets["XAI_API_KEY"]
-    except:
-        llm_api_key = st.sidebar.text_input("xAI API Key", type="password")
+# Common OpenRouter Models
+openrouter_models = [
+    "openai/gpt-4o",
+    "openai/gpt-4-turbo",
+    "anthropic/claude-3.5-sonnet",
+    "anthropic/claude-3-opus",
+    "google/gemini-pro-1.5",
+    "google/gemini-flash-1.5",
+    "mistralai/mistral-large",
+    "meta-llama/llama-3-70b-instruct"
+]
 
-selected_model = st.sidebar.selectbox("Select Model", model_options)
+# Allow user to select from list or type custom model ID
+selected_model = st.sidebar.selectbox(
+    "Select Model", 
+    openrouter_models, 
+    index=0,
+    help="Select a model supported by OpenRouter."
+)
+
+# Option for custom model ID
+use_custom_model = st.sidebar.checkbox("Use Custom Model ID")
+if use_custom_model:
+    selected_model = st.sidebar.text_input("Enter OpenRouter Model ID", value="openai/gpt-4o")
+
 
 # --- Main Content: File Uploads ---
 col1, col2 = st.columns(2)
@@ -88,7 +91,7 @@ if gsc_file and crawl_file:
             st.dataframe(filtered_df.head())
             
             if st.button("Start Analysis"):
-                if not (serper_api_key and firecrawl_api_key and llm_api_key):
+                if not (serper_api_key and firecrawl_api_key and openrouter_api_key):
                     st.error("Please provide all necessary API keys.")
                 else:
                     progress_bar = st.progress(0)
@@ -107,8 +110,8 @@ if gsc_file and crawl_file:
                         # 2. Scrape Content
                         content = scrape_content(row['URL'], firecrawl_api_key)
                         
-                        # 3. LLM Analysis
-                        analysis = analyze_intent_with_llm(row, serp_data, content, selected_model, llm_api_key)
+                        # 3. LLM Analysis (via OpenRouter)
+                        analysis = analyze_intent_with_llm(row, serp_data, content, selected_model, openrouter_api_key)
                         
                         # Combine results
                         row_result = row.to_dict()

@@ -1,11 +1,9 @@
 import openai
-import anthropic
-import google.generativeai as genai
 import json
 
 def analyze_intent_with_llm(row, serp_data, content, model_choice, api_key):
     """
-    Analyzes intent and content alignment using the selected LLM.
+    Analyzes intent and content alignment using the selected LLM via OpenRouter.
     """
     
     prompt = f"""
@@ -42,64 +40,26 @@ def analyze_intent_with_llm(row, serp_data, content, model_choice, api_key):
     """
 
     try:
-        if "gpt" in model_choice:
-            client = openai.OpenAI(api_key=api_key)
-            response = client.chat.completions.create(
-                model=model_choice,
-                messages=[
-                    {"role": "system", "content": "You are an SEO expert. Output JSON only."},
-                    {"role": "user", "content": prompt}
-                ],
-                response_format={"type": "json_object"}
-            )
-            return json.loads(response.choices[0].message.content)
-
-        elif "claude" in model_choice:
-            client = anthropic.Anthropic(api_key=api_key)
-            response = client.messages.create(
-                model=model_choice,
-                max_tokens=1000,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ]
-            )
-            # Extract JSON from Claude's response (which might contain text)
-            content_text = response.content[0].text
-            start = content_text.find('{')
-            end = content_text.rfind('}') + 1
-            return json.loads(content_text[start:end])
-
-        elif "gemini" in model_choice:
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel(model_choice)
-            response = model.generate_content(prompt)
-            # Clean up markdown code blocks if present
-            text = response.text.replace('```json', '').replace('```', '')
-            return json.loads(text)
-            
-        # Placeholder for xAI (Grok) - assuming OpenAI-compatible API structure
-        elif "grok" in model_choice:
-             # xAI API structure is often similar to OpenAI, but endpoint differs.
-             # For now, we'll treat it as a generic OpenAI-compatible client if base_url was provided,
-             # but since we don't have a specific SDK, we'll skip or mock.
-             # User asked to include it, so we'll add a placeholder or use OpenAI client with base_url if known.
-             # Assuming standard OpenAI client for now with specific model name.
-             client = openai.OpenAI(
-                 api_key=api_key, 
-                 base_url="https://api.x.ai/v1" 
-             )
-             response = client.chat.completions.create(
-                model=model_choice,
-                messages=[
-                    {"role": "system", "content": "You are an SEO expert. Output JSON only."},
-                    {"role": "user", "content": prompt}
-                ],
-                response_format={"type": "json_object"}
-            )
-             return json.loads(response.choices[0].message.content)
-
-        else:
-            return {"error": "Unsupported model selected"}
+        # OpenRouter uses the OpenAI SDK structure
+        client = openai.OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=api_key,
+        )
+        
+        response = client.chat.completions.create(
+            model=model_choice,
+            messages=[
+                {"role": "system", "content": "You are an SEO expert. Output JSON only."},
+                {"role": "user", "content": prompt}
+            ],
+            response_format={"type": "json_object"},
+            extra_headers={
+                "HTTP-Referer": "https://streamlit.io/", # Optional: For OpenRouter rankings
+                "X-Title": "Search Intent Analyzer", # Optional: For OpenRouter rankings
+            }
+        )
+        
+        return json.loads(response.choices[0].message.content)
 
     except Exception as e:
         return {
