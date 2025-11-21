@@ -93,9 +93,12 @@ if gsc_file and crawl_file:
         crawl_df = crawl_result
     
     if gsc_df is not None and crawl_df is not None:
-        merged_df = merge_data(gsc_df, crawl_df)
+        merged_result = merge_data(gsc_df, crawl_df)
         
-        if merged_df is not None:
+        if isinstance(merged_result, tuple):
+            st.error(f"Merge Error: {merged_result[1]}")
+        else:
+            merged_df = merged_result
             st.success(f"Successfully merged data! Found {len(merged_df)} URLs.")
             
             # Debug: Show columns
@@ -163,7 +166,7 @@ if gsc_file and crawl_file:
                         "text/csv",
                         key='download-csv'
                     )
-        else:
-            st.error("Failed to merge data. Please check column names.")
     else:
-        st.error("Error loading files.")
+        # Only show generic error if specific errors weren't shown
+        if not (isinstance(gsc_result, tuple) or isinstance(crawl_result, tuple)):
+             st.error("Error loading files.")
