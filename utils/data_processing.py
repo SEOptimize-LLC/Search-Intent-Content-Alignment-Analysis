@@ -53,6 +53,9 @@ def normalize_columns(df):
     
     if new_columns:
         df.rename(columns=new_columns, inplace=True)
+    
+    # Drop empty "Unnamed" columns
+    df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
         
     return df
 
@@ -143,6 +146,13 @@ def merge_data(gsc_df, crawl_df):
     # Ensure URLs are strings and stripped
     gsc_df['URL'] = gsc_df['URL'].astype(str).str.strip()
     crawl_df['URL'] = crawl_df['URL'].astype(str).str.strip()
+    
+    # Drop conflicting performance columns from crawl data to avoid _x/_y suffixes
+    # We prioritize GSC data for these metrics
+    conflicting_cols = ['Impressions', 'Clicks', 'CTR', 'Position', 'Top queries']
+    cols_to_drop = [col for col in conflicting_cols if col in crawl_df.columns]
+    if cols_to_drop:
+        crawl_df = crawl_df.drop(columns=cols_to_drop)
     
     # Merge
     merged_df = pd.merge(gsc_df, crawl_df, on='URL', how='left')
